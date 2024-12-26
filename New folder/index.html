@@ -1,0 +1,891 @@
+<html>
+<head>
+    <base href="/">
+    <title>MinecraftOS - Java Development</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tahoma&amp;display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* Add at beginning of existing styles */
+        body {
+            margin: 0;
+            font-family: 'Tahoma', sans-serif;
+            background: #333;
+            overflow: hidden;
+        }
+
+        .desktop {
+            width: 100vw;
+            height: 100vh;
+            background: url('/Minecraft.png') no-repeat center center;
+            background-size: cover;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(to bottom, #2A6EC5, #0F44A0, #225DC2);
+            border-top: 1px solid #3B78D4;
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .start-button {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(to bottom, #3C8B1A, #2E6915) !important;
+            border: 1px solid #2B6216 !important;
+            border-radius: 3px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .start-button:hover {
+            background: linear-gradient(to bottom, #4CA123, #377D19) !important;
+        }
+
+        .window {
+            position: absolute;
+            background: #ECE9D8;
+            border: 1px solid #0054E3;
+            border-radius: 8px 8px 0 0;
+            min-width: 200px;
+            min-height: 150px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .window-header {
+            background: linear-gradient(to right, #0054E3, #2E87EA, #0054E3);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 7px 7px 0 0;
+            display: flex;
+            justify-content: space-between;
+            cursor: move;
+        }
+
+        .window-content {
+            padding: 15px;
+            background: #FFFFFF;
+            border-top: 1px solid #7BA4E2;
+        }
+
+        .close-btn {
+            background: linear-gradient(to bottom, #E45D51, #D83B31);
+            color: white;
+            border: 1px solid #C22B22;
+            border-radius: 3px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            background: linear-gradient(to bottom, #F86B5E, #E84A3F);
+        }
+
+        .icon {
+            width: 64px;
+            height: 64px;
+            margin: 10px;
+            text-align: center;
+            color: white;
+            cursor: pointer;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .icon svg {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 5px;
+        }
+
+        .icon-label {
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            text-shadow: 2px 2px 3px rgba(0,0,0,0.8);
+            color: white;
+            font-weight: bold;
+        }
+
+        .console-input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: monospace;
+            width: 100%;
+            outline: none;
+        }
+
+        .memory-display {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .memory-cell {
+            background: #8B8B8B;
+            border: 2px inset #DBDBDB;
+            padding: 5px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .register {
+            background: #000082;
+            color: white;
+            padding: 5px;
+            margin: 5px 0;
+            font-family: monospace;
+        }
+
+        .start-menu {
+            position: fixed;
+            bottom: 40px;
+            left: 0;
+            width: 200px;
+            background: linear-gradient(135deg, #0C55C4 0%, #165ACA 50%, #0C55C4 100%);
+            border: 1px solid #0C55C4;
+            border-radius: 6px 6px 0 0;
+            box-shadow: 2px -2px 5px rgba(0,0,0,0.2);
+            display: none;
+            padding: 5px 2px;
+        }
+
+        .start-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 20px;
+            border-radius: 3px;
+            margin: 2px 3px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .start-menu-item:hover {
+            background: linear-gradient(to bottom, #2E87EA, #225FD3);
+            color: white;
+        }
+
+        .start-menu-item svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+
+        /* New styles for VM window */
+        .vm-container {
+            width: 100%;
+            height: 500px;
+            border: none;
+            background: #fff;
+        }
+
+        .vm-container:fullscreen {
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+
+        /* Vendor prefixes for better browser support */
+        .vm-container:-webkit-full-screen {
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+
+        .vm-container:-moz-full-screen {
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+
+        .vm-container:-ms-fullscreen {
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+
+        .vm-controls {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+        }
+
+        .vm-button {
+            padding: 5px 10px;
+            background: linear-gradient(to bottom, #2A6EC5, #0F44A0);
+            border: 1px solid #0C55C4;
+            color: white;
+            border-radius: 3px;
+        }
+
+        .vm-button:hover {
+            background: linear-gradient(to bottom, #3C82D8, #1957B3);
+        }
+
+        /* Add styles for the new icon image */
+        .icon img {
+            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.8));
+        }
+
+        .start-menu-item img {
+            vertical-align: middle;
+        }
+
+        /* Add to existing styles */
+        .welcome-window {
+            width: 400px;
+            height: 200px;
+            background: linear-gradient(to bottom, #ECE9D8, #FFFFFF);
+            border: 1px solid #0054E3;
+            border-radius: 8px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .welcome-content {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .welcome-button {
+            background: linear-gradient(to bottom, #2A6EC5, #0F44A0);
+            color: white;
+            border: 1px solid #0C55C4;
+            padding: 8px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .welcome-button:hover {
+            background: linear-gradient(to bottom, #3C82D8, #1957B3);
+        }
+
+        /* Add to head section */
+        .code-editor {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Consolas', monospace;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        .kernel-monitor {
+            background: #000;
+            color: #0f0;
+            font-family: 'Consolas', monospace;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+        }
+
+        .process-list {
+            border: 1px solid #666;
+            margin: 10px 0;
+        }
+
+        .process-item {
+            padding: 5px;
+            border-bottom: 1px solid #666;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="desktop">
+        <div class="icon" onclick="createWindow(&apos;VM Console&apos;)">
+            <svg viewBox="0 0 24 24">
+                <path fill="#ffffff" d="M20,19V7H4V19H20M20,3A2,2 0 0,1 22,5V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V5C2,3.89 2.9,3 4,3H20M13,17V15H18V17H13M9.58,13L5.57,9H8.4L11.7,12.3C12.09,12.69 12.09,13.33 11.7,13.72L8.42,17H5.59L9.58,13Z"/>
+            </svg>
+            <div class="icon-label">VM Console</div>
+        </div>
+        <div class="icon" onclick="createWindow(&apos;Memory Viewer&apos;)">
+            <svg viewBox="0 0 24 24">
+                <path fill="#ffffff" d="M2,2H8V4H16V2H22V8H20V16H22V22H16V20H8V22H2V16H4V8H2V2M16,16V8H8V16H16M4,4V6H6V4H4M18,4V6H20V4H18M4,18V20H6V18H4M18,18V20H20V18H18Z"/>
+            </svg>
+            <div class="icon-label">Memory</div>
+        </div>
+        <div class="icon" onclick="createWindow(&apos;Calculator&apos;)">
+            <svg viewBox="0 0 24 24">
+                <path fill="#ffffff" d="M7,2H17A2,2 0 0,1 19,4V20A2,2 0 0,1 17,22H7A2,2 0 0,1 5,20V4A2,2 0 0,1 7,2M7,4V8H17V4H7M7,10V12H9V10H7M11,10V12H13V10H11M15,10V12H17V10H15M7,14V16H9V14H7M11,14V16H13V14H11M15,14V16H17V14H15M7,18V20H9V18H7M11,18V20H13V18H11M15,18V20H17V18H15Z"/>
+            </svg>
+            <div class="icon-label">Calculator</div>
+        </div>
+        <!-- Add new desktop icon for VM -->
+        <div class="icon" onclick="createWindow(&apos;VM&apos;)">
+            <svg viewBox="0 0 24 24">
+                <path fill="#ffffff" d="M20,12H4V4H20M20,18H4V12H20M20,2H4C2.89,2 2,2.89 2,4V18C2,19.11 2.89,20 4,20H20C21.11,20 22,19.11 22,18V4C22,2.89 21.11,2 20,2Z"/>
+            </svg>
+            <div class="icon-label">Virtual Machine</div>
+        </div>
+        <!-- Add new desktop icon for Minecraft -->
+        <div class="icon" onclick="createWindow(&apos;Minecraft&apos;)">
+            <img src="/Minecraft12.png" alt="Minecraft" style="width: 32px; height: 32px; margin-bottom: 5px;">
+            <div class="icon-label">Minecraft</div>
+        </div>
+        <div class="taskbar">
+            <div class="start-button">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path fill="#FFFFFF" d="M4,4H20V20H4V4M6,6V18H18V6H6Z"/>
+                </svg>
+            </div>
+        </div>
+        <div class="start-menu">
+            <div class="start-menu-item" onclick="handleStartMenuClick(&apos;programs&apos;)">
+                <svg viewBox="0 0 24 24">
+                    <path fill="#866F5B" d="M20,19V7H4V19H20M20,3A2,2 0 0,1 22,5V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V5C2,3.89 2.9,3 4,3H20M13,17V15H18V17H13M9.58,13L5.57,9H8.4L11.7,12.3C12.09,12.69 12.09,13.33 11.7,13.72L8.42,17H5.59L9.58,13Z"/>
+                </svg>
+                Programs
+            </div>
+            <div class="start-menu-item" onclick="handleStartMenuClick(&apos;system&apos;)">
+                <svg viewBox="0 0 24 24">
+                    <path fill="#866F5B" d="M12,3L2,12H5V20H19V12H22L12,3M12,8.5C14.34,8.5 16.46,9.43 18,10.94L16.8,12.12C15.58,10.91 13.88,10.17 12,10.17C10.12,10.17 8.42,10.91 7.2,12.12L6,10.94C7.54,9.43 9.66,8.5 12,8.5M12,11.83C13.4,11.83 14.67,12.39 15.6,13.3L14.4,14.47C13.79,13.87 12.94,13.5 12,13.5C11.06,13.5 10.21,13.87 9.6,14.47L8.4,13.3C9.33,12.39 10.6,11.83 12,11.83M12,15.17C12.94,15.17 13.7,15.91 13.7,16.83C13.7,17.75 12.94,18.5 12,18.5C11.06,18.5 10.3,17.75 10.3,16.83C10.3,15.91 11.06,15.17 12,15.17Z"/>
+                </svg>
+                System Info
+            </div>
+            <div class="start-menu-item" onclick="handleStartMenuClick(&apos;memory&apos;)">
+                <svg viewBox="0 0 24 24">
+                    <path fill="#866F5B" d="M2,2H8V4H16V2H22V8H20V16H22V22H16V20H8V22H2V16H4V8H2V2M16,16V8H8V16H16M4,4V6H6V4H4M18,4V6H20V4H18M4,18V20H6V18H4M18,18V20H20V18H18Z"/>
+                </svg>
+                Memory
+            </div>
+            <div class="start-menu-item" onclick="handleStartMenuClick(&apos;calculator&apos;)">
+                <svg viewBox="0 0 24 24">
+                    <path fill="#866F5B" d="M7,2H17A2,2 0 0,1 19,4V20A2,2 0 0,1 17,22H7A2,2 0 0,1 5,20V4A2,2 0 0,1 7,2M7,4V8H17V4H7M7,10V12H9V10H7M11,10V12H13V10H11M15,10V12H17V10H15M7,14V16H9V14H7M11,14V16H13V14H11M15,14V16H17V14H15M7,18V20H9V18H7M11,18V20H13V18H11M15,18V20H17V18H15Z"/>
+                </svg>
+                Calculator
+            </div>
+            <!-- Add VM option to start menu -->
+            <div class="start-menu-item" onclick="handleStartMenuClick(&apos;vm&apos;)">
+                <svg viewBox="0 0 24 24">
+                    <path fill="#866F5B" d="M20,12H4V4H20M20,18H4V12H20M20,2H4C2.89,2 2,2.89 2,4V18C2,19.11 2.89,20 4,20H20C21.11,20 22,19.11 22,18V4C22,2.89 21.11,2 20,2Z"/>
+                </svg>
+                Virtual Machine
+            </div>
+            <!-- Add Minecraft option to start menu -->
+            <div class="start-menu-item" onclick="handleStartMenuClick(&apos;minecraft&apos;)">
+                <img src="/Minecraft12.png" alt="Minecraft" style="width: 20px; height: 20px; margin-right: 10px;">
+                Minecraft
+            </div>
+            <!-- Add OS Kernel option to start menu -->
+            <div class="start-menu-item" onclick="handleStartMenuClick(&apos;kernel&apos;)">
+                <svg viewBox="0 0 24 24">
+                    <path fill="#866F5B" d="M4,4H20V20H4V4M6,6V18H18V6H6Z"/>
+                </svg>
+                OS Kernel
+            </div>
+        </div>
+    </div>
+
+    <script>let windows = [];
+let activeWindow = null;
+let offsetX, offsetY;
+let memory = new Array(64).fill(0);
+let registers = {
+  A: 0,
+  B: 0,
+  C: 0,
+  PC: 0
+};
+let startMenuOpen = false;
+let currentVM = null;
+class Process {
+  constructor(name, pid, status = 'ready') {
+    this.name = name;
+    this.pid = pid;
+    this.status = status;
+    this.memory = [];
+  }
+}
+class OSKernel {
+  constructor() {
+    this.processes = new Map();
+    this.memory = new Array(1024).fill(0);
+    this.nextPid = 1;
+    this.activeProcess = null;
+  }
+  createProcess(name) {
+    const process = new Process(name, this.nextPid++);
+    this.processes.set(process.pid, process);
+    return process;
+  }
+  killProcess(pid) {
+    const process = this.processes.get(pid);
+    if (process) {
+      process.memory = [];
+      this.processes.delete(pid);
+    }
+  }
+  allocateMemory(process, size) {
+    const block = this.memory.findIndex(cell => cell === 0);
+    if (block >= 0 && block + size <= this.memory.length) {
+      for (let i = 0; i < size; i++) {
+        this.memory[block + i] = process.pid;
+      }
+      process.memory.push({
+        start: block,
+        size
+      });
+      return block;
+    }
+    return -1;
+  }
+  freeMemory(process) {
+    process.memory.forEach(block => {
+      for (let i = 0; i < block.size; i++) {
+        this.memory[block.start + i] = 0;
+      }
+    });
+    process.memory = [];
+  }
+}
+class SimpleInterpreter {
+  constructor(kernel) {
+    this.kernel = kernel;
+    this.variables = new Map();
+    this.output = '';
+  }
+  interpret(code) {
+    const lines = code.split('\n');
+    for (const line of lines) {
+      const tokens = line.trim().split(' ');
+      switch (tokens[0].toLowerCase()) {
+        case 'print':
+          this.output += tokens.slice(1).join(' ') + '\n';
+          break;
+        case 'let':
+          this.variables.set(tokens[1], parseInt(tokens[3]));
+          break;
+        case 'add':
+          const result = this.variables.get(tokens[1]) + this.variables.get(tokens[2]);
+          this.variables.set(tokens[3], result);
+          break;
+      }
+    }
+    return this.output;
+  }
+}
+const kernel = new OSKernel();
+const interpreter = new SimpleInterpreter(kernel);
+function runCode() {
+  const editor = document.getElementById('code-editor');
+  const monitor = document.getElementById('kernel-monitor');
+  const code = editor.innerText;
+  const process = kernel.createProcess('UserProgram');
+  process.status = 'running';
+  updateProcessList();
+  try {
+    const output = interpreter.interpret(code);
+    monitor.innerHTML += '\n' + output;
+    process.status = 'completed';
+  } catch (e) {
+    monitor.innerHTML += '\nError: ' + e.message;
+    process.status = 'error';
+  }
+  kernel.killProcess(process.pid);
+  updateProcessList();
+  monitor.scrollTop = monitor.scrollHeight;
+}
+function updateProcessList() {
+  const list = document.getElementById('process-list');
+  if (!list) return;
+  list.innerHTML = '<div class="process-item"><strong>PID</strong><strong>Name</strong><strong>Status</strong></div>';
+  kernel.processes.forEach(proc => {
+    list.innerHTML += `<div class="process-item">
+      <span>${proc.pid}</span>
+      <span>${proc.name}</span>
+      <span>${proc.status}</span>
+    </div>`;
+  });
+}
+function createWindow(title) {
+  const win = document.createElement('div');
+  win.className = 'window';
+  win.style.left = 100 + windows.length * 30 + 'px';
+  win.style.top = 100 + windows.length * 30 + 'px';
+  let content = '';
+  if (title === 'VM Console') {
+    content = `
+            <div style="background: black; color: white; padding: 10px; height: 300px; overflow-y: auto;">
+                <div id="console-output">MinecraftOS VM v0.1<br>Type 'help' for commands<br></div>
+                <div style="display: flex; align-items: center;">
+                    <span>>&nbsp;</span>
+                    <input type="text" class="console-input" onkeydown="handleCommand(event)"/>
+                </div>
+            </div>
+        `;
+  } else if (title === 'Memory Viewer') {
+    content = `
+            <div class="registers">
+                ${Object.entries(registers).map(([name, value]) => `<div class="register">R${name}: ${value}</div>`).join('')}
+            </div>
+            <div class="memory-display">
+                ${memory.map((val, i) => `<div class="memory-cell" id="mem-${i}">${val}</div>`).join('')}
+            </div>
+        `;
+  } else if (title === 'Calculator') {
+    content = `
+            <div style="padding: 10px; background: #f0f0f0;">
+                <input type="text" id="calc-display" style="width: 100%; margin-bottom: 10px; padding: 5px;" readonly value="0">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
+                    ${['7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '=', '+'].map(btn => `<button onclick="handleCalc('${btn}')" style="padding: 10px;">${btn}</button>`).join('')}
+                </div>
+            </div>
+        `;
+  } else if (title === 'System Info') {
+    content = `
+        <div style="padding: 10px;">
+            <h3>MinecraftOS System Information</h3>
+            <div class="register">Memory Usage: ${memory.filter(x => x !== 0).length}/${memory.length} blocks</div>
+            <div class="register">Active Programs: ${windows.length}</div>
+            <div class="register">CPU Registers:</div>
+            ${Object.entries(registers).map(([name, value]) => `<div class="register">R${name}: ${value}</div>`).join('')}
+        </div>
+    `;
+  } else if (title === 'VM') {
+    content = `
+        <div class="vm-controls">
+            <button class="vm-button" onclick="vmControl('start')">Start</button>
+            <button class="vm-button" onclick="vmControl('stop')">Stop</button>
+            <button class="vm-button" onclick="vmControl('reset')">Reset</button>
+            <button class="vm-button" onclick="vmControl('fullscreen')">Fullscreen</button>
+            <select id="os-select" class="vm-button" onchange="vmChangeOS(this.value)">
+                <option value="">Select OS</option>
+                <option value="linux">Linux</option>
+                <option value="windows">Windows</option>
+                <option value="freedos">FreeDOS</option>
+            </select>
+        </div>
+        <iframe id="vm-frame" class="vm-container" src="https://websim.ai/p/bmz4tcq8tw4pfrbz3dli"></iframe>
+    `;
+    win.style.width = '800px';
+    win.style.height = '600px';
+  } else if (title === 'Minecraft') {
+    content = `
+        <div class="vm-controls">
+            <button class="vm-button" onclick="minecraftControl('start')">Start</button>
+            <button class="vm-button" onclick="minecraftControl('stop')">Stop</button>
+            <button class="vm-button" onclick="minecraftControl('reset')">Reset</button>
+            <button class="vm-button" onclick="minecraftControl('fullscreen')">Fullscreen</button>
+        </div>
+        <iframe id="minecraft-frame" class="vm-container" src="https://websim.ai/p/79ro1yf6zykm4b61ey41"></iframe>
+    `;
+    win.style.width = '800px';
+    win.style.height = '600px';
+  } else if (title === 'OS Kernel') {
+    content = `
+      <div class="kernel-monitor" id="kernel-monitor">Kernel initialized</div>
+      <div class="process-list" id="process-list"></div>
+      <div class="code-editor" id="code-editor" contenteditable="true">print Hello World
+let x = 5
+let y = 3
+add x y result
+print result</div>
+      <button onclick="runCode()" class="vm-button">Run Code</button>
+    `;
+  }
+  win.innerHTML = `
+        <div class="window-header">
+            <span>${title}</span>
+            <div class="close-btn" onclick="closeWindow(this.parentElement.parentElement)">×</div>
+        </div>
+        <div class="window-content">
+            ${content}
+        </div>
+    `;
+  document.body.appendChild(win);
+  windows.push(win);
+  makeWindowDraggable(win);
+  bringToFront(win);
+  if (title === 'VM Console') {
+    win.querySelector('.console-input').focus();
+  }
+}
+let calcDisplay = '0';
+let lastOp = null;
+let newNum = true;
+function handleCalc(btn) {
+  const display = document.getElementById('calc-display');
+  if ('0123456789.'.includes(btn)) {
+    if (newNum) {
+      calcDisplay = btn;
+      newNum = false;
+    } else {
+      calcDisplay += btn;
+    }
+    display.value = calcDisplay;
+  } else if ('+-*/'.includes(btn)) {
+    lastOp = btn;
+    newNum = true;
+    registers.A = parseFloat(calcDisplay);
+  } else if (btn === '=') {
+    registers.B = parseFloat(calcDisplay);
+    switch (lastOp) {
+      case '+':
+        calcDisplay = registers.A + registers.B;
+        break;
+      case '-':
+        calcDisplay = registers.A - registers.B;
+        break;
+      case '*':
+        calcDisplay = registers.A * registers.B;
+        break;
+      case '/':
+        calcDisplay = registers.A / registers.B;
+        break;
+    }
+    display.value = calcDisplay;
+    newNum = true;
+    updateMemoryDisplay();
+  }
+}
+function handleCommand(event) {
+  if (event.key === 'Enter') {
+    const input = event.target.value;
+    const output = document.getElementById('console-output');
+    output.innerHTML += `> ${input}<br>`;
+    const commands = input.split(' ');
+    switch (commands[0].toLowerCase()) {
+      case 'help':
+        output.innerHTML += `Available commands:<br>
+                    LOAD [reg] [value] - Load value into register<br>
+                    STORE [addr] [value] - Store value in memory<br>
+                    ADD [reg1] [reg2] - Add registers<br>
+                    CLEAR - Clear memory<br>`;
+        break;
+      case 'load':
+        if (commands.length === 3 && registers.hasOwnProperty(commands[1].toUpperCase())) {
+          registers[commands[1].toUpperCase()] = parseInt(commands[2]);
+          updateMemoryDisplay();
+          output.innerHTML += `Loaded ${commands[2]} into R${commands[1].toUpperCase()}<br>`;
+        }
+        break;
+      case 'store':
+        if (commands.length === 3) {
+          const addr = parseInt(commands[1]);
+          const value = parseInt(commands[2]);
+          if (addr >= 0 && addr < memory.length) {
+            memory[addr] = value;
+            updateMemoryDisplay();
+            output.innerHTML += `Stored ${value} at address ${addr}<br>`;
+          }
+        }
+        break;
+      case 'clear':
+        memory.fill(0);
+        Object.keys(registers).forEach(key => registers[key] = 0);
+        updateMemoryDisplay();
+        output.innerHTML += 'Memory cleared<br>';
+        break;
+      default:
+        output.innerHTML += 'Unknown command. Type "help" for available commands.<br>';
+    }
+    event.target.value = '';
+    output.scrollTop = output.scrollHeight;
+  }
+}
+function updateMemoryDisplay() {
+  const memoryDisplay = document.querySelector('.memory-display');
+  if (memoryDisplay) {
+    memory.forEach((val, i) => {
+      const cell = document.getElementById(`mem-${i}`);
+      if (cell) cell.textContent = val;
+    });
+  }
+  const registersDisplay = document.querySelector('.registers');
+  if (registersDisplay) {
+    registersDisplay.innerHTML = Object.entries(registers).map(([name, value]) => `<div class="register">R${name}: ${value}</div>`).join('');
+  }
+}
+function closeWindow(win) {
+  win.remove();
+  windows = windows.filter(w => w !== win);
+}
+function bringToFront(win) {
+  windows.forEach(w => w.style.zIndex = '1');
+  win.style.zIndex = '2';
+  activeWindow = win;
+}
+function makeWindowDraggable(win) {
+  const header = win.querySelector('.window-header');
+  header.addEventListener('mousedown', e => {
+    bringToFront(win);
+    offsetX = e.clientX - win.offsetLeft;
+    offsetY = e.clientY - win.offsetTop;
+    document.addEventListener('mousemove', moveWindow);
+    document.addEventListener('mouseup', stopMoving);
+  });
+  function moveWindow(e) {
+    win.style.left = e.clientX - offsetX + 'px';
+    win.style.top = e.clientY - offsetY + 'px';
+  }
+  function stopMoving() {
+    document.removeEventListener('mousemove', moveWindow);
+    document.removeEventListener('mouseup', stopMoving);
+  }
+}
+function toggleStartMenu() {
+  const startMenu = document.querySelector('.start-menu');
+  startMenuOpen = !startMenuOpen;
+  startMenu.style.display = startMenuOpen ? 'block' : 'none';
+}
+function handleStartMenuClick(action) {
+  switch (action) {
+    case 'programs':
+      createWindow('VM Console');
+      break;
+    case 'system':
+      createWindow('System Info');
+      break;
+    case 'memory':
+      createWindow('Memory Viewer');
+      break;
+    case 'calculator':
+      createWindow('Calculator');
+      break;
+    case 'vm':
+      createWindow('VM');
+      break;
+    case 'minecraft':
+      createWindow('Minecraft');
+      break;
+    case 'kernel':
+      createWindow('OS Kernel');
+      break;
+  }
+  toggleStartMenu();
+}
+function vmControl(action) {
+  const frame = document.getElementById('vm-frame');
+  if (!frame) return;
+  switch (action) {
+    case 'start':
+      frame.contentWindow.postMessage({
+        type: 'start'
+      }, '*');
+      break;
+    case 'stop':
+      frame.contentWindow.postMessage({
+        type: 'stop'
+      }, '*');
+      break;
+    case 'reset':
+      frame.contentWindow.postMessage({
+        type: 'reset'
+      }, '*');
+      break;
+    case 'fullscreen':
+      if (frame.requestFullscreen) {
+        frame.requestFullscreen();
+      } else if (frame.mozRequestFullScreen) {
+        frame.mozRequestFullScreen();
+      } else if (frame.webkitRequestFullscreen) {
+        frame.webkitRequestFullscreen();
+      } else if (frame.msRequestFullscreen) {
+        frame.msRequestFullscreen();
+      }
+      break;
+  }
+}
+function vmChangeOS(os) {
+  const frame = document.getElementById('vm-frame');
+  if (!frame || !os) return;
+  frame.src = `https://websim.ai/p/bmz4tcq8tw4pfrbz3dli?os=${os}`;
+}
+function minecraftControl(action) {
+  const frame = document.getElementById('minecraft-frame');
+  if (!frame) return;
+  switch (action) {
+    case 'start':
+      frame.contentWindow.postMessage({
+        type: 'start'
+      }, '*');
+      break;
+    case 'stop':
+      frame.contentWindow.postMessage({
+        type: 'stop'
+      }, '*');
+      break;
+    case 'reset':
+      frame.contentWindow.postMessage({
+        type: 'reset'
+      }, '*');
+      break;
+    case 'fullscreen':
+      if (frame.requestFullscreen) {
+        frame.requestFullscreen();
+      } else if (frame.mozRequestFullScreen) {
+        frame.mozRequestFullScreen();
+      } else if (frame.webkitRequestFullscreen) {
+        frame.webkitRequestFullscreen();
+      } else if (frame.msRequestFullscreen) {
+        frame.msRequestFullscreen();
+      }
+      break;
+  }
+}
+function showWelcomeMessage() {
+  const welcomeDiv = document.createElement('div');
+  welcomeDiv.className = 'window welcome-window';
+  welcomeDiv.innerHTML = `
+        <div class="window-header">
+            <span>Welcome to MinecraftOS</span>
+            <div class="close-btn" onclick="closeWindow(this.parentElement.parentElement)">×</div>
+        </div>
+        <div class="window-content welcome-content">
+            <p>Your device came with a copy of Minecraft</p>
+            <button class="welcome-button" onclick="closeWindow(this.parentElement.parentElement); createWindow('Minecraft');">Launch Minecraft</button>
+        </div>
+    `;
+  document.body.appendChild(welcomeDiv);
+  windows.push(welcomeDiv);
+  makeWindowDraggable(welcomeDiv);
+  bringToFront(welcomeDiv);
+}
+window.addEventListener('message', event => {
+  if (event.origin !== 'https://websim.ai') return;
+  const data = event.data;
+  if (data.type === 'vm-status') {
+    console.log('VM Status:', data.status);
+  }
+});
+document.querySelector('.start-button').addEventListener('click', toggleStartMenu);
+document.addEventListener('DOMContentLoaded', () => {
+  showWelcomeMessage();
+});
+document.addEventListener('click', e => {
+  if (startMenuOpen && !e.target.closest('.start-menu') && !e.target.closest('.start-button')) {
+    toggleStartMenu();
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key.toLowerCase() === 'n') {
+    e.preventDefault();
+    if (activeWindow) {
+      closeWindow(activeWindow);
+    }
+  }
+});</script>
+</body>
+</html>
